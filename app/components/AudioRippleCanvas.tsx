@@ -94,24 +94,46 @@ export default function AudioRippleCanvas() {
   const [mixPercents, setMixPercents] = useState<number[]>([0, 0, 0, 0]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [selectedBg, setSelectedBg] = useState(0);
+  const [uploadedBgs, setUploadedBgs] = useState<
+    { src: string; label: string; fontColor: string }[]
+  >([]);
 
   const panelRef = useRef<HTMLDivElement>(null);
   useOnClickOutside(panelRef, () => setPanelOpen(false));
 
-  const changeBackground = useCallback((index: number) => {
-    const mat = renderMaterialRef.current;
-    if (!mat) return;
-    setSelectedBg(index);
-    const loader = new THREE.TextureLoader();
-    loader.load(BACKGROUNDS[index].src, (texture) => {
-      texture.minFilter = THREE.LinearFilter;
-      texture.magFilter = THREE.LinearFilter;
-      mat.uniforms.backgroundImage.value = texture;
-      mat.uniforms.bgImageSize.value.set(
-        texture.image.width,
-        texture.image.height,
-      );
+  const allBgs = [...BACKGROUNDS, ...uploadedBgs];
+
+  const changeBackground = useCallback(
+    (index: number) => {
+      const mat = renderMaterialRef.current;
+      if (!mat) return;
+      setSelectedBg(index);
+      const bgs = [...BACKGROUNDS, ...uploadedBgs];
+      const loader = new THREE.TextureLoader();
+      loader.load(bgs[index].src, (texture) => {
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        mat.uniforms.backgroundImage.value = texture;
+        mat.uniforms.bgImageSize.value.set(
+          texture.image.width,
+          texture.image.height,
+        );
+      });
+    },
+    [uploadedBgs],
+  );
+
+  const handleUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    Array.from(files).forEach((file) => {
+      const url = URL.createObjectURL(file);
+      setUploadedBgs((prev) => [
+        ...prev,
+        { src: url, label: file.name, fontColor: 'rgba(255,255,255,0.75)' },
+      ]);
     });
+    e.target.value = '';
   }, []);
 
   // Initialize audio context and preload all buffers
@@ -547,7 +569,7 @@ export default function AudioRippleCanvas() {
       <div
         className='absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none select-none z-10'
         style={{
-          color: BACKGROUNDS[selectedBg].fontColor,
+          color: allBgs[selectedBg].fontColor,
           fontSize: '20px',
           letterSpacing: '0.12em',
           fontFamily: 'Retrogression, serif',
@@ -560,7 +582,7 @@ export default function AudioRippleCanvas() {
       <div
         className='absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10'
         style={{
-          color: BACKGROUNDS[selectedBg].fontColor,
+          color: allBgs[selectedBg].fontColor,
           fontSize: '20px',
           letterSpacing: '0.12em',
           fontFamily: 'Retrogression, serif',
@@ -573,7 +595,7 @@ export default function AudioRippleCanvas() {
       <div
         className='absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10'
         style={{
-          color: BACKGROUNDS[selectedBg].fontColor,
+          color: allBgs[selectedBg].fontColor,
           fontSize: '20px',
           letterSpacing: '0.12em',
           fontFamily: 'Retrogression, serif',
@@ -586,7 +608,7 @@ export default function AudioRippleCanvas() {
       <div
         className='absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none select-none z-10'
         style={{
-          color: BACKGROUNDS[selectedBg].fontColor,
+          color: allBgs[selectedBg].fontColor,
           fontSize: '20px',
           letterSpacing: '0.12em',
           fontFamily: 'Retrogression, serif',
@@ -603,7 +625,7 @@ export default function AudioRippleCanvas() {
           hasClicked ? 'opacity-0' : 'opacity-100'
         }`}
         style={{
-          color: BACKGROUNDS[selectedBg].fontColor,
+          color: allBgs[selectedBg].fontColor,
           fontSize: '40px',
           fontWeight: 'medium',
           letterSpacing: '0.12em',
@@ -620,7 +642,7 @@ export default function AudioRippleCanvas() {
           hasClicked ? 'opacity-100' : 'opacity-0'
         }`}
         style={{
-          color: BACKGROUNDS[selectedBg].fontColor,
+          color: allBgs[selectedBg].fontColor,
           fontSize: '20px',
           fontWeight: 'medium',
           letterSpacing: '0.12em',
@@ -796,39 +818,125 @@ export default function AudioRippleCanvas() {
                       gap: '10px',
                     }}
                   >
-                    {BACKGROUNDS.map((bg, i) => (
-                      <button
-                        key={bg.src}
-                        onClick={() => changeBackground(i)}
-                        style={{
-                          width: '100%',
-                          aspectRatio: '1',
-                          borderRadius: '12px',
-                          overflow: 'hidden',
-                          border:
-                            selectedBg === i
-                              ? '2.5px solid white'
-                              : '2.5px solid transparent',
-                          cursor: 'pointer',
-                          padding: 0,
-                          background: 'rgba(255,255,255,0.1)',
-                          transition: 'border-color 0.2s ease',
-                        }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={bg.src}
-                          alt={bg.label}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            display: 'block',
-                          }}
-                        />
-                      </button>
-                    ))}
+                    {allBgs.map((bg, i) => {
+                      const isUploaded = i >= BACKGROUNDS.length;
+                      const isSelected = selectedBg === i;
+                      return (
+                        <div
+                          key={bg.src}
+                          className='group'
+                          style={{ position: 'relative' }}
+                        >
+                          <button
+                            onClick={() => changeBackground(i)}
+                            style={{
+                              width: '100%',
+                              aspectRatio: '1',
+                              borderRadius: '12px',
+                              overflow: 'hidden',
+                              border: isSelected
+                                ? '2.5px solid white'
+                                : '2.5px solid transparent',
+                              cursor: 'pointer',
+                              padding: 0,
+                              background: 'rgba(255,255,255,0.1)',
+                              transition: 'border-color 0.2s ease',
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={bg.src}
+                              alt={bg.label}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                display: 'block',
+                              }}
+                            />
+                          </button>
+                          {isUploaded && !isSelected && (
+                            <button
+                              className='opacity-0 group-hover:opacity-100'
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const uploadIndex = i - BACKGROUNDS.length;
+                                URL.revokeObjectURL(bg.src);
+                                setUploadedBgs((prev) =>
+                                  prev.filter((_, j) => j !== uploadIndex),
+                                );
+                                if (selectedBg > i) {
+                                  setSelectedBg((prev) => prev - 1);
+                                }
+                              }}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '50%',
+                                border: 'none',
+                                background: 'rgba(0,0,0,0.55)',
+                                color: 'white',
+                                fontSize: '12px',
+                                lineHeight: '20px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'opacity 0.15s ease',
+                              }}
+                            >
+                              &#x2715;
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  {/* Upload area */}
+                  <label
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      marginTop: '12px',
+                      padding: '10px',
+                      borderRadius: '12px',
+                      border: '1.5px dashed rgba(255,255,255,0.35)',
+                      background: 'rgba(255,255,255,0.06)',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      color: 'rgba(255,255,255,0.6)',
+                      transition:
+                        'border-color 0.2s ease, background 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor =
+                        'rgba(255,255,255,0.6)';
+                      e.currentTarget.style.background =
+                        'rgba(255,255,255,0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor =
+                        'rgba(255,255,255,0.35)';
+                      e.currentTarget.style.background =
+                        'rgba(255,255,255,0.06)';
+                    }}
+                  >
+                    <span style={{ fontSize: '16px' }}>+</span>
+                    Upload an image
+                    <input
+                      type='file'
+                      accept='image/*'
+                      multiple
+                      onChange={handleUpload}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
                 </div>
               </motion.div>
             </motion.div>
