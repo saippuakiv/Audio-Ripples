@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Audio Ripple
 
-## Getting Started
+A real-time interactive audiovisual instrument built with WebGL shaders and the Web Audio API. Pointer input drives a GPU-based fluid simulation that displaces a background texture, while spatially-weighted audio stems crossfade based on cursor position.
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The application renders a single fullscreen WebGL canvas. Pointer events inject energy into a wave simulation running on the GPU. The resulting height field displaces background-image UVs in a second render pass, producing a water-caustic distortion with specular highlights.
+
+Four categories of audio stems are mixed in real time — each mapped to a screen edge. Moving the pointer toward an edge increases that category's gain.
+
+```
+            texture (top)
+               |
+  melody (left) ——— + ——— accent (right)
+               |
+            rhythm (bottom)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Architecture
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Rendering pipeline
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Two-pass ping-pong framebuffer pipeline via Three.js `WebGLRenderTarget`:
 
-## Learn More
+| Pass | Shader | Description |
+|------|--------|-------------|
+| 1 — Simulation | `waveSimFrag` | Solves the 2D wave equation per-pixel, outputs pressure, velocity, and gradients |
+| 2 — Composite | `renderFrag` | Displaces background UVs using wave gradients, applies cover-fit and specular glint |
 
-To learn more about Next.js, take a look at the following resources:
+Shaders are defined in `app/components/shaders.ts`, decoupled from the React component.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Audio engine
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Built on Tone.js:
 
-## Deploy on Vercel
+- 4 stem categories, each with a pool of `.wav` files
+- Gain per category computed from pointer distance to the corresponding screen edge
+- Stems crossfade to a new random file each loop cycle
+- All audio fades out after 8s of inactivity
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### UI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Frosted-glass background panel with Framer Motion layout animations
+- Session-only image upload via `URL.createObjectURL` (no server round-trip)
+- Per-background `fontColor` for canvas-overlay text
+
+## Project structure
+
+```
+app/
+  layout.tsx                # Root layout, metadata
+  page.tsx                  # Single-route entry — renders <AudioRippleCanvas />
+  globals.css               # @font-face, resets
+  components/
+    AudioRippleCanvas.tsx   # Core component — Three.js, audio, pointer handling, UI
+    shaders.ts              # GLSL: fullscreenVert, waveSimFrag, renderFrag
+public/
+  bg.jpg, bg1–bg5.*         # Built-in background textures
+  stems/                    # Audio stems by category
+    texture/                #   texture-01 … texture-05.wav
+    melody/                 #   melody-01 … melody-04.wav
+    accent/                 #   accent-01 … accent-02.wav
+    rhythm/                 #   rhythm-01 … rhythm-03.wav
+  fonts/                    # Retrogression Regular (.ttf, .otf)
+```
+
+## Tech stack
+
+| Layer | Technology |
+|-------|------------|
+| Framework | Next.js 16 (App Router), React 19 |
+| Rendering | Three.js — custom GLSL shaders, ping-pong framebuffers |
+| Audio | Tone.js — Player, Gain, ToneAudioBuffer |
+| Animation | Framer Motion |
+| Styling | Tailwind CSS 4 |
+| Language | TypeScript |
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. Click anywhere with sound enabled to begin.
