@@ -98,7 +98,7 @@ export default function AudioRippleCanvas() {
     { src: string; label: string; fontColor: string }[]
   >([]);
 
-  const panelRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null!);
   useOnClickOutside(panelRef, () => setPanelOpen(false));
 
   const allBgs = [...BACKGROUNDS, ...uploadedBgs];
