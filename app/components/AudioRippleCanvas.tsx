@@ -5,6 +5,7 @@ import { useOnClickOutside } from 'usehooks-ts';
 import * as Tone from 'tone';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { fullscreenVert, waveSimFrag, renderFrag } from './shaders';
 
 interface Anchor {
@@ -843,17 +844,33 @@ export default function AudioRippleCanvas() {
                               transition: 'border-color 0.2s ease',
                             }}
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={bg.src}
-                              alt={bg.label}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                display: 'block',
-                              }}
-                            />
+                            {isUploaded ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img
+                                src={bg.src}
+                                alt={bg.label}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  display: 'block',
+                                }}
+                              />
+                            ) : (
+                              <Image
+                                src={bg.src}
+                                alt={bg.label}
+                                width={160}
+                                height={160}
+                                sizes='80px'
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  display: 'block',
+                                }}
+                              />
+                            )}
                           </button>
                           {isUploaded && !isSelected && (
                             <button
