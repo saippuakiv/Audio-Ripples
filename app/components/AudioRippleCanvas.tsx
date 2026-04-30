@@ -5,7 +5,7 @@ import { useOnClickOutside } from 'usehooks-ts';
 import * as Tone from 'tone';
 import * as THREE from 'three';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
+import NextImage from 'next/image';
 import { fullscreenVert, waveSimFrag, renderFrag } from './shaders';
 
 interface Anchor {
@@ -857,7 +857,7 @@ export default function AudioRippleCanvas() {
                                 }}
                               />
                             ) : (
-                              <Image
+                              <NextImage
                                 src={bg.src}
                                 alt={bg.label}
                                 width={160}
