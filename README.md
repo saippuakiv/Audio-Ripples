@@ -1,4 +1,4 @@
-# Audio Ripple
+# Audio Ripples
 
 A real-time interactive audiovisual instrument built with WebGL shaders and the Web Audio API. Pointer input drives a GPU-based fluid simulation that displaces a background texture, while spatially-weighted audio stems crossfade based on cursor position.
 
@@ -22,10 +22,10 @@ Four categories of audio stems are mixed in real time — each mapped to a scree
 
 Two-pass ping-pong framebuffer pipeline via Three.js `WebGLRenderTarget`:
 
-| Pass | Shader | Description |
-|------|--------|-------------|
-| 1 — Simulation | `waveSimFrag` | Solves the 2D wave equation per-pixel, outputs pressure, velocity, and gradients |
-| 2 — Composite | `renderFrag` | Displaces background UVs using wave gradients, applies cover-fit and specular glint |
+| Pass           | Shader        | Description                                                                         |
+| -------------- | ------------- | ----------------------------------------------------------------------------------- |
+| 1 — Simulation | `waveSimFrag` | Solves the 2D wave equation per-pixel, outputs pressure, velocity, and gradients    |
+| 2 — Composite  | `renderFrag`  | Displaces background UVs using wave gradients, applies cover-fit and specular glint |
 
 Shaders are defined in `app/components/shaders.ts`, decoupled from the React component.
 
@@ -66,14 +66,14 @@ public/
 
 ## Tech stack
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Next.js 16 (App Router), React 19 |
+| Layer     | Technology                                             |
+| --------- | ------------------------------------------------------ |
+| Framework | Next.js 16 (App Router), React 19                      |
 | Rendering | Three.js — custom GLSL shaders, ping-pong framebuffers |
-| Audio | Tone.js — Player, Gain, ToneAudioBuffer |
-| Animation | Framer Motion |
-| Styling | Tailwind CSS 4 |
-| Language | TypeScript |
+| Audio     | Tone.js — Player, Gain, ToneAudioBuffer                |
+| Animation | Framer Motion                                          |
+| Styling   | Tailwind CSS 4                                         |
+| Language  | TypeScript                                             |
 
 ## Getting started
 
